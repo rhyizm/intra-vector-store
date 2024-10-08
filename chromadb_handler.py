@@ -153,3 +153,12 @@ class ChromaDBHandler:
             query_embeddings=query_embeddings,
             n_results=n_results
         )
+
+    def list_all_documents(self):
+        """
+        コレクション内のすべてのドキュメントを取得します。
+
+        :return: コレクション内のドキュメント情報を含む辞書。キーには 'ids'、'documents' などが含まれます。
+        """
+        all_documents = self.collection.get()
+        return all_documents

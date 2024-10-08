@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}CSVファイルアップロード{% endblock %}
+
+{% block extra_style %}
+    <style>
+        .custom-file-upload {
+            display: flex;
+            align-items: center;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            padding: 12px;
+            cursor: pointer;
+            background-color: #fff;
+            margin-bottom: 20px;
+        }
+        .custom-file-upload:hover {
+            background-color: #f5f5f5;
+        }
+        .custom-file-upload input[type="file"] {
+            display: none;
+        }
+        .file-name {
+            margin-left: 10px;
+            font-size: 16px;
+            color: #555555;
+        }
+        /* スナックバーのスタイル調整 */
+        .mdc-snackbar {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: auto;
+            max-width: 568px;
+            background-color: #323232;
+            color: white;
+            padding: 0 24px;
+            border-radius: 4px;
+        }
+        .mdc-snackbar__label {
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        .mdc-snackbar__actions {
+            display: flex;
+            justify-content: flex-end;
+            padding-bottom: 16px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- フラッシュメッセージの表示 -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="message-list">
+            {% for message in messages %}
+                <div class="mdc-snackbar mdc-snackbar--open" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="mdc-snackbar__surface" role="alert">
+                        <div class="mdc-snackbar__label" id="snackbar-label">
+                            {{ message }}
+                        </div>
+                        <div class="mdc-snackbar__actions" aria-label="Snackbar actions">
+                            <button type="button" class="mdc-button mdc-snackbar__action" data-mdc-snackbar-action>
+                                閉じる
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- CSVアップロードフォーム -->
+    <h2>CSVアップロード</h2>
+
+    <form method="POST" action="/csv-upload" enctype="multipart/form-data" id="upload-form">
+        <label class="custom-file-upload mdc-button mdc-button--outlined">
+            <svg xmlns="http://www.w3.org/2000/svg" height="20px" width="20px" viewBox="0 -960 960 960" style="fill: var(--mdc-theme-primary);">
+                <path d="M728-326q0 103-72.18 174.5-72.17 71.5-175 71.5Q378-80 305.5-151.5T233-326v-380q0-72.5 51.5-123.25T408-880q72 0 123.5 50.75T583-706v360q0 42-30 72t-72.5 30q-42.5 0-72.5-29.67-30-29.68-30-72.33v-340q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v340q0 17 12.5 29.5t30.64 12.5q18.14 0 30-12.5T523-346v-360q0-48-33.5-81t-81.71-33q-48.21 0-81.5 33.06T293-706v380q0 78 54.97 132T481-140q77.92 0 132.46-54Q668-248 668-326v-360q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v360Z"/>
+            </svg>
+            <span>CSVファイルを選択</span>
+            <input type="file" id="file" name="file" accept=".csv" required>
+        </label>
+        <span class="file-name" id="file-name">ファイルが選択されていません</span>
+        <br>
+        <div class="button-container">
+            <button type="submit" class="mdc-button mdc-button--raised">
+                <span class="mdc-button__label">アップロード</span>
+            </button>
+        </div>
+    </form>
+{% endblock %}
+
+{% block loading_overlay %}
+    <!-- ローディングインジケーター -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+{% endblock %}
+
+{% block extra_script %}
+  <script>
+      const fileInput = document.getElementById('file');
+      const fileNameDisplay = document.getElementById('file-name');
+
+      fileInput.addEventListener('change', function(event) {
+          const file = event.target.files[0];
+          if (file) {
+              fileNameDisplay.textContent = file.name;
+          } else {
+              fileNameDisplay.textContent = 'ファイルが選択されていません';
+          }
+      });
+
+      // フォーム送信時にローディングインジケーターを表示
+      const uploadForm = document.getElementById('upload-form');
+      uploadForm.addEventListener('submit', function(event) {
+          document.getElementById('loading-overlay').style.display = 'flex';
+      });
+
+      // スナックバーの動作をカスタマイズ
+      const snackbars = document.querySelectorAll('.mdc-snackbar');
+      snackbars.forEach(function(snackbarElement) {
+          const snackbar = new mdc.snackbar.MDCSnackbar(snackbarElement);
+          snackbar.open();
+      });
+  </script>
+{% endblock %}

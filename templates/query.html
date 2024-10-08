@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block title %}データ検索{% endblock %}
+
+{% block extra_style %}
+    <style>
+        .mdc-text-field {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .query-result {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table, th, td {
+            border: 1px solid #cccccc;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        /* ローディングインジケーターのスタイル */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            display: none;
+        }
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- クエリ入力フォーム -->
+    <h2>データ検索</h2>
+    <form id="query-form">
+        <label class="mdc-text-field mdc-text-field--outlined">
+            <input
+                type="text"
+                id="query_text"
+                name="query_text"
+                class="mdc-text-field__input"
+                required
+                aria-labelledby="query_text_label"
+            />
+            <span class="mdc-notched-outline">
+                <span class="mdc-notched-outline__leading"></span>
+                <span class="mdc-notched-outline__notch">
+                    <span class="mdc-floating-label" id="query_text_label">クエリテキスト</span>
+                </span>
+                <span class="mdc-notched-outline__trailing"></span>
+            </span>
+        </label>
+    
+        <!-- 結果の数のフィールド -->
+        <label class="mdc-text-field mdc-text-field--outlined">
+            <input
+                type="number"
+                id="n_results"
+                name="n_results"
+                class="mdc-text-field__input"
+                value="5"
+                min="1"
+                aria-labelledby="n_results_label"
+            />
+            <span class="mdc-notched-outline">
+                <span class="mdc-notched-outline__leading"></span>
+                <span class="mdc-notched-outline__notch">
+                    <span class="mdc-floating-label" id="n_results_label">結果の数</span>
+                </span>
+                <span class="mdc-notched-outline__trailing"></span>
+            </span>
+        </label>
+        <br><br>
+        <div class="button-container">
+            <button type="submit" class="mdc-button mdc-button--raised">
+                <span class="mdc-button__label">検索</span>
+            </button>
+        </div>
+    </form>
+
+    <!-- クエリ結果表示エリア -->
+    <div class="query-result" id="query-result"></div>
+{% endblock %}
+
+{% block loading_overlay %}
+    <!-- ローディングインジケーター -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        document.getElementById('query-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const queryText = document.getElementById('query_text').value.trim();
+            const nResults = document.getElementById('n_results').value;
+
+            if (!queryText) {
+                alert('クエリテキストを入力してください。');
+                return;
+            }
+
+            const data = {
+                query_texts: [queryText],
+                n_results: parseInt(nResults)
+            };
+
+            document.getElementById('loading-overlay').style.display = 'flex';
+
+            fetch('{{ url_for("query_data") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-overlay').style.display = 'none';
+
+                const resultDiv = document.getElementById('query-result');
+                resultDiv.innerHTML = '';
+
+                if (data.error) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'mdc-typography--body1 mdc-theme--error';
+                    errorDiv.textContent = data.error;
+                    resultDiv.appendChild(errorDiv);
+                } else {
+                    const documents = data["documents"][0];
+                    const distances = data["distances"][0];
+                    const ids = data["ids"][0];
+
+                    if (documents && documents.length > 0) {
+                        const table = document.createElement('table');
+                        const header = table.insertRow();
+                        header.innerHTML = '<th>ID</th><th>Document</th><th>Score</th>';
+
+                        for (let i = 0; i < documents.length; i++) {
+                            const row = table.insertRow();
+                            row.insertCell(0).textContent = ids[i] || 'N/A';
+                            row.insertCell(1).textContent = documents[i] || 'N/A';
+                            row.insertCell(2).textContent = distances[i] !== undefined ? distances[i].toFixed(2) : 'N/A';
+                        }
+
+                        resultDiv.appendChild(table);
+                    } else {
+                        const noResultDiv = document.createElement('div');
+                        noResultDiv.className = 'mdc-typography--body1';
+                        noResultDiv.textContent = '結果が見つかりませんでした。';
+                        resultDiv.appendChild(noResultDiv);
+                    }
+                }
+            })
+            .catch((error) => {
+                console.error('エラー:', error);
+                document.getElementById('loading-overlay').style.display = 'none';
+
+                const resultDiv = document.getElementById('query-result');
+                resultDiv.innerHTML = '';
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'mdc-typography--body1 mdc-theme--error';
+                errorDiv.textContent = 'クエリの実行中にエラーが発生しました。';
+                resultDiv.appendChild(errorDiv);
+            });
+        });
+    </script>
+{% endblock %}

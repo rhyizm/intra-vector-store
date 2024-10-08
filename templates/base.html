@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}デフォルトタイトル{% endblock %}</title>
+    <!-- Material Design Components CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-components-web/14.0.0/material-components-web.min.css">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- 共通スタイル -->
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .mdc-top-app-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .content {
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 80px 20px;
+            box-sizing: border-box;
+        }
+        .mdc-button {
+            margin-top: 20px;
+        }
+        .mdc-top-app-bar {
+            z-index: 4;
+        }
+        .mdc-top-app-bar__action-item {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            margin-left: 16px;
+        }
+        .mdc-top-app-bar__action-item .material-icons {
+            margin-right: 8px;
+        }
+        .mdc-drawer .mdc-list-item {
+            font-family: Roboto,sans-serif;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-font-smoothing: antialiased;
+            font-size: .875rem;
+            line-height: 1.375rem;
+            font-weight: 500;
+            letter-spacing: .0071428571em;
+            text-decoration: inherit;
+            text-transform: inherit;
+            height: 40px;
+            margin: 8px;
+            padding: 0 8px;
+        }
+        .mdc-list-item__graphic {
+            margin-left: 0;
+            margin-right: 32px;
+            width: 24px;
+            height: 24px;
+            -ms-flex-negative: 0;
+            flex-shrink: 0;
+            -ms-flex-align: center;
+            align-items: center;
+            -ms-flex-pack: center;
+            justify-content: center;
+            fill: currentColor;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .button-container .mdc-button {
+            width: 200px;
+        }
+    </style>
+    {% block extra_style %}{% endblock %}
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <aside class="mdc-drawer mdc-drawer--modal">
+        <div class="mdc-drawer__header">
+            <h3 class="mdc-drawer__title">メニュー</h3>
+        </div>    
+        <div class="mdc-drawer__content">
+            <nav class="mdc-list">
+                <a class="mdc-list-item mdc-list-item--activated" href="{{ url_for('upload_file') }}">
+                    <i class="material-icons mdc-list-item__graphic" aria-hidden="true">cloud_upload</i>
+                    CSVアップロード
+                </a>
+                <a class="mdc-list-item mdc-list-item--activated" href="{{ url_for('list_documents') }}">
+                    <i class="material-icons mdc-list-item__graphic" aria-hidden="true">list</i>
+                    データ一覧
+                </a>
+                <a class="mdc-list-item mdc-list-item--activated" href="{{ url_for('query_ui') }}">
+                    <i class="material-icons mdc-list-item__graphic" aria-hidden="true">search</i>
+                    データ検索
+                </a>
+            </nav>
+        </div>
+    </aside>
+    <div class="mdc-drawer-scrim"></div>
+    <div id="container">
+        <!-- トップアプリバー -->
+        <header class="mdc-top-app-bar">
+            <div class="mdc-top-app-bar__row">
+                <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+                    <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button" aria-label="メニュー">menu</button>
+                </section>
+                <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-center" role="toolbar">
+                    <span class="mdc-top-app-bar__title">{% block header_title %}Intra Vector Store{% endblock %}</span>
+                </section>
+            </div>
+        </header>
+    
+        <!-- メインコンテンツ -->
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- ローディングインジケーター（必要な場合） -->
+    {% block loading_overlay %}
+    {% endblock %}
+
+    <!-- 共通スクリプト -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/material-components-web/14.0.0/material-components-web.min.js"></script>
+    <script>
+        mdc.autoInit();
+
+        const drawer = mdc.drawer.MDCDrawer.attachTo(document.querySelector('.mdc-drawer'));
+        const topAppBar = mdc.topAppBar.MDCTopAppBar.attachTo(document.querySelector('.mdc-top-app-bar'));
+
+        topAppBar.setScrollTarget(document.getElementById('container'));
+        topAppBar.listen('MDCTopAppBar:nav', () => {
+            drawer.open = !drawer.open;
+        });
+
+        const scrim = document.querySelector('.mdc-drawer-scrim');
+        scrim.addEventListener('click', () => {
+            console.log("Click");
+        });
+
+        const textFields = document.querySelectorAll('.mdc-text-field');
+        textFields.forEach((textField) => {
+            mdc.textField.MDCTextField.attachTo(textField);
+        });
+    </script>
+    {% block extra_script %}{% endblock %}
+</body>
+</html>

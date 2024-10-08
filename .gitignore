@@ -135,5 +135,5 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 
-# その他、必要に応じて追加
-
+# アップロードしたファイル
+uploads/

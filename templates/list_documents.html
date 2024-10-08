@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}データ一覧{% endblock %}
+
+{% block extra_style %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-components-web/14.0.0/material-components-web.min.css">
+    <style>
+        .mdc-data-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            display: none;
+        }
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h2>データ一覧</h2>
+    <div class="mdc-data-table" id="data-table-container">
+        <div class="mdc-data-table__table-container">
+            <table class="mdc-data-table__table" aria-label="Document List">
+                <thead>
+                    <tr class="mdc-data-table__header-row">
+                        <th class="mdc-data-table__header-cell" role="columnheader" scope="col">ID</th>
+                        <th class="mdc-data-table__header-cell" role="columnheader" scope="col">Document</th>
+                    </tr>
+                </thead>
+                <tbody class="mdc-data-table__content" id="data-table-content">
+                    <!-- ここにデータが挿入されます -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block loading_overlay %}
+    <!-- ローディングインジケーター -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+
+            fetch('{{ url_for("list_all_documents") }}', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-overlay').style.display = 'none';
+                const content = document.getElementById('data-table-content');
+                content.innerHTML = '';
+
+                if (data.error) {
+                    const errorRow = document.createElement('tr');
+                    errorRow.className = 'mdc-data-table__row';
+                    const errorCell = document.createElement('td');
+                    errorCell.className = 'mdc-data-table__cell';
+                    errorCell.setAttribute('colspan', '2');
+                    errorCell.textContent = data.error;
+                    errorRow.appendChild(errorCell);
+                    content.appendChild(errorRow);
+                } else {
+                    const ids = data.ids;
+                    const documents = data.documents;
+
+                    if (ids && documents && ids.length > 0) {
+                        for (let i = 0; i < ids.length; i++) {
+                            const row = document.createElement('tr');
+                            row.className = 'mdc-data-table__row';
+
+                            const idCell = document.createElement('td');
+                            idCell.className = 'mdc-data-table__cell';
+                            idCell.textContent = ids[i] || 'N/A';
+                            row.appendChild(idCell);
+
+                            const documentCell = document.createElement('td');
+                            documentCell.className = 'mdc-data-table__cell';
+                            documentCell.textContent = documents[i] || 'N/A';
+                            row.appendChild(documentCell);
+
+                            content.appendChild(row);
+                        }
+                    } else {
+                        const noResultRow = document.createElement('tr');
+                        noResultRow.className = 'mdc-data-table__row';
+                        const noResultCell = document.createElement('td');
+                        noResultCell.className = 'mdc-data-table__cell';
+                        noResultCell.setAttribute('colspan', '2');
+                        noResultCell.textContent = 'データが見つかりませんでした。';
+                        noResultRow.appendChild(noResultCell);
+                        content.appendChild(noResultRow);
+                    }
+                }
+            })
+            .catch((error) => {
+                console.error('エラー:', error);
+                document.getElementById('loading-overlay').style.display = 'none';
+                const content = document.getElementById('data-table-content');
+                content.innerHTML = '';
+                const errorRow = document.createElement('tr');
+                errorRow.className = 'mdc-data-table__row';
+                const errorCell = document.createElement('td');
+                errorCell.className = 'mdc-data-table__cell';
+                errorCell.setAttribute('colspan', '2');
+                errorCell.textContent = 'データの取得中にエラーが発生しました。';
+                errorRow.appendChild(errorCell);
+                content.appendChild(errorRow);
+            });
+        });
+    </script>
+{% endblock %}
